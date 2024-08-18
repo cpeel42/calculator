@@ -1,0 +1,1 @@
+This is the final project for the Javascript Foundations course on The Odin Project. Here I will be writing a calculator app that can do basic functions (add, subtract, multiply and divide). It will use HTML, CSS (including Flexbox), and Javascript(including the use of DOM manipulation, objects and array methods).
