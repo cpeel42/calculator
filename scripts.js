@@ -3,12 +3,13 @@ let display = document.querySelector('.display');
 let termA;
 let termB;
 let operation;
+let newDisplayVal = true
 
 calculator.addEventListener('click', (event) => {
     let id = event.target.id;
     let textContent = event.target.textContent;
     switch (id) {
-        case 'decimal':
+        case '.':
         case '0':
         case '1':
         case '2':
@@ -26,16 +27,28 @@ calculator.addEventListener('click', (event) => {
         case 'multiply':
         case 'divide':
         case 'exponent':
+            newDisplayVal = true;
             operation = id;
-            termA = display.textContent
+            termA = display.textContent;
             break;
         case 'equals':
-            termB = display.textContent
+            newDisplayVal = true
+            if (termB === undefined) {
+                termB = display.textContent;
+            }
+            console.log(termA, operation, termB);
+            termA = compute()
             clearDisplay();
-            updateDisplay(compute());
+            updateDisplay(termA);
             break;
         case 'clear':
             reset();
+            break;
+        case 'back':
+            backspace();
+            break;
+        case 'negative':
+            togglePositiveNegative(display.textContent);
             break;
     }
 })
@@ -56,19 +69,41 @@ function compute() {
             result = termA / termB;
             break;
         case 'exponent':
-            //to be fixed
+            result = termA
+            for (i = 1; i < termB; i++) {
+                result *= termA;
+            }
             break;
     }
-    console.log(result);
     return result
 }
 
 function reset() {
-    termA = 'undefined';
-    termB = 'undefined';
-    operation = 'undefined';
+    newDisplayVal = true
+    termA = undefined;
+    termB = undefined;
+    operation = undefined;
     display.textContent = 0;
+}
 
+function backspace() {
+    let text = display.textContent
+    if (text.length === 1) {
+        display.textContent = 0;
+        newDisplayVal = true
+    } else {
+        display.textContent = text.substring(0, text.length - 1);
+    }
+}
+
+function togglePositiveNegative() {
+    let text = display.textContent
+    if (text.at(0) === '-') {
+        text = text.substring(0);
+    } else {
+        text = `-${text}`
+    }
+    display.textContent = text;
 }
 
 function clearDisplay() {
@@ -76,9 +111,19 @@ function clearDisplay() {
 }
 
 function updateDisplay(string) {
-    if (display.textContent == 0 || termA) {
+    if (newDisplayVal == true) {
         display.textContent = string;
+        newDisplayVal = false; 
     } else {
         display.textContent += string;
     }
+}
+
+function updateTerm(term, string) {
+    if (term) {
+        term = string;
+    } else {
+        term += string;
+    }
+    return term
 }
