@@ -1,129 +1,164 @@
-let calculator = document.querySelector('.calculator')
 let display = document.querySelector('.display');
+let buttons = document.querySelector('.buttons');
 let termA;
 let termB;
-let operation;
-let newDisplayVal = true
+let result;
+let operator;
 
-calculator.addEventListener('click', (event) => {
-    let id = event.target.id;
-    let textContent = event.target.textContent;
-    switch (id) {
-        case '.':
-        case '0':
-        case '1':
-        case '2':
-        case '3':
-        case '4':
-        case '5':
-        case '6':
-        case '7':
-        case '8':
-        case '9':
-            updateDisplay(textContent);
+buttons.addEventListener('click', (event) => {
+    let button = event.target.dataset;
+    switch (button.buttonType) {
+        case 'number':
+            addToTerm(button.number);
             break;
-        case 'add':
-        case 'subtract':
-        case 'multiply':
-        case 'divide':
-        case 'exponent':
-            newDisplayVal = true;
-            operation = id;
-            termA = display.textContent;
+        case 'operator':
+            termB = undefined;
+            operator = button.operator;
             break;
-        case 'equals':
-            newDisplayVal = true
-            if (termB === undefined) {
-                termB = display.textContent;
-            }
-            console.log(termA, operation, termB);
-            termA = compute()
-            clearDisplay();
-            updateDisplay(termA);
-            break;
-        case 'clear':
-            reset();
-            break;
-        case 'back':
-            backspace();
-            break;
-        case 'negative':
-            togglePositiveNegative(display.textContent);
-            break;
-    }
-})
-
-function compute() {
-    let result;
-    switch (operation) {
-        case 'add':
-            result = +termA + +termB;
-            break;
-        case 'subtract':
-            result = termA - termB;
-            break;
-        case 'multiply':
-            result = termA * termB;
-            break;
-        case 'divide':
-            result = termA / termB;
-            break;
-        case 'exponent':
-            result = termA
-            for (i = 1; i < termB; i++) {
-                result *= termA;
+        case 'special':
+            switch (button.special) {
+                case 'clear':
+                    reset()
+                    break;
+                case 'back':
+                    backspace()
+                    break;
+                case 'negative':
+                    toggleNeg()
+                    break;
+                case 'equals':
+                    compute();
+                    break;
             }
             break;
     }
-    return result
-}
+    updateDisplay()
+    console.log(`${termA} ${operator} ${termB} = ${result}`);
+});
 
 function reset() {
-    newDisplayVal = true
     termA = undefined;
     termB = undefined;
-    operation = undefined;
+    operator = undefined;
+    result = undefined;
     display.textContent = 0;
 }
 
-function backspace() {
-    let text = display.textContent
-    if (text.length === 1) {
-        display.textContent = 0;
-        newDisplayVal = true
-    } else {
-        display.textContent = text.substring(0, text.length - 1);
+function compute() {
+    if (result) {
+        termA = result;
+    }
+    if (operator) {
+        switch (operator) {
+            case 'add':
+                result = +termA + +termB;
+                break;
+            case 'subtract':
+                result = termA - termB;
+                break;
+            case 'multiply':
+                result = termA * termB;
+                break;
+            case 'divide':
+                result = termA / termB;
+                break;
+            case 'exponent':
+                result = termA
+                for (i = 1; i < termB; i++) {
+                    result *= termA;
+                }
+                break;
+        }
     }
 }
 
-function togglePositiveNegative() {
-    let text = display.textContent
-    if (text.at(0) === '-') {
-        text = text.substring(0);
+function updateDisplay() {
+    if (result) {
+        display.textContent = result;
+    } else if (termB) {
+        display.textContent = termB
+    } else if (termA) {
+        display.textContent = termA
     } else {
-        text = `-${text}`
-    }
-    display.textContent = text;
-}
-
-function clearDisplay() {
-    display.textContent = 0;
-}
-
-function updateDisplay(string) {
-    if (newDisplayVal == true) {
-        display.textContent = string;
-        newDisplayVal = false; 
-    } else {
-        display.textContent += string;
+        display.textContent = '0'
     }
 }
 
-function updateTerm(term, string) {
+// These need to be refactored:
+
+function addToTerm(number) {
+    if (operator) {
+        termB = addIfDefined(number, termB);
+    } else {
+        termA = addIfDefined(number, termA);
+    }
+}
+
+function addIfDefined(number, term) {
     if (term) {
-        term = string;
+        term += number;
     } else {
-        term += string;
+        term = number;
     }
     return term
 }
+
+function backspace() {
+    if (operator) {
+        termB = backspaceIfDefined(termB);
+    } else {
+        termA = backspaceIfDefined(termA);
+    }
+}
+
+function backspaceIfDefined(term) {
+    if (term.length === 1) {
+        term = undefined;
+    } else {
+        term = term.substring(0, term.length - 1);
+    }
+    return term;
+}
+
+function toggleNeg() {
+    if (operator) {
+        termB = toggleNegIfDefined(termB);
+    } else {
+        termA = toggleNegIfDefined(termA);
+    }
+}
+
+function toggleNegIfDefined(number) {
+    if (number.at(0) === '-') {
+        number = number.substring(0);
+    } else {
+        number = `-${number}`;
+    }
+    return number;
+}
+
+/* chat gpt idea to combine:
+function updateTerm(action, number) {
+    let term = operator ? termB : termA;
+
+    switch (action) {
+        case 'add':
+            term = (term !== undefined) ? term + number : number;
+            break;
+        case 'backspace':
+            term = (term && term.length > 1) ? term.slice(0, -1) : undefined;
+            break;
+        case 'toggleNeg':
+            term = (term && term.startsWith('-')) ? term.slice(1) : `-${term}`;
+            break;
+        default:
+            throw new Error('Unknown action');
+    }
+
+    if (operator) {
+        termB = term;
+    } else {
+        termA = term;
+    }
+}
+*/
